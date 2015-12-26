@@ -11,6 +11,7 @@ implementation {
   components IntDataC, MainC, LedsC, new TimerMilliC();
 
 	components ActiveMessageC;
+  components new AMSenderC(AM_MSG);
   components new AMReceiverC(AM_MSG);
 
   IntDataC.Boot -> MainC;
@@ -18,5 +19,7 @@ implementation {
   IntDataC.Timer -> TimerMilliC;
 
 	IntDataC.Control -> ActiveMessageC;
+	IntDataC.Packet -> AMSenderC;
+  IntDataC.AMSend -> AMSenderC;
   IntDataC.Receive -> AMReceiverC;
 }

@@ -12,7 +12,7 @@ typedef nx_struct intdata_msg_t {
 }intdata_msg_t;
 
 enum {
-  AM_MSG = 6,
+  AM_MSG = 0,
 };
 
 #endif

@@ -13,8 +13,10 @@ module IntDataC {
     interface Boot;
     interface Leds;
     interface Packet;
+		interface AMPacket;
     interface AMSend;
-    interface Timer<TMilli>;
+    interface Timer<TMilli> as Timer1;
+    interface Timer<TMilli> as Timer2;
   }
 }
 implementation {
@@ -25,7 +27,7 @@ implementation {
 	uint16_t integers[2000];
 	bool listened[2000];
 
-	uint32_t max = 0, min = 65535, sum = 0, average, median;
+	uint32_t max = 0, min = 65535, sum = 0, average = 0, median = 0;
 	uint16_t curSeq = 0;
 	uint16_t lackStack[100];
 	int top;
@@ -35,12 +37,24 @@ implementation {
   	for (i = 0; i < 2000; ++i) {
 			listened[i] = FALSE;
   	}
-  	while (call Control.start() != SUCCESS) ;
+  	call Control.start();
+  }
+
+  task void sendResult() {
+		result_msg_t* this_pkt = (result_msg_t*)(call Packet.getPayload(&packet, NULL));
+		this_pkt->group_id = 4;
+		this_pkt->max = max;
+		this_pkt->min = min;
+		this_pkt->sum = sum;
+		this_pkt->average = average;
+		this_pkt->median = median;
+
+		call AMSend.send(0, &packet, sizeof(result_msg_t));
   }
 
   event void Control.startDone(error_t err) {
 		if (err == SUCCESS) {
-			call Timer.startPeriodic(1000);
+			call Timer1.startPeriodic(1000);
 		} else {
 			call Control.start();
 		}
@@ -56,22 +70,6 @@ implementation {
 			--top;
 				
 			if(call AMSend.send(AM_BROADCAST_ADDR, &packet, sizeof(filldata_msg_t)) == SUCCESS) {
-				busy = TRUE;
-			}
-		}
-  }
-
-  task void sendResult() {
-		if (!busy) {
-			result_msg_t* this_pkt = (result_msg_t*)(call Packet.getPayload(&packet, NULL));
-			this_pkt->group_id = 4;
-			this_pkt->max = max;
-			this_pkt->min = min;
-			this_pkt->sum = sum;
-			this_pkt->average = average;
-			this_pkt->median = median;
-
-			if (call AMSend.send(0, &packet, sizeof(result_msg_t)) == SUCCESS) {
 				busy = TRUE;
 			}
 		}
@@ -147,13 +145,18 @@ implementation {
   	}
   }
 
-  event void Timer.fired() {
+  event void Timer1.fired() {
   	if (ifAllListened()) {
-			call Timer.stop();
-			call Control.stop();
+			call Timer1.stop();
 			calValue();
   		post sendResult();
+			//call Control.stop();
   	}
+  }
+
+  event void Timer2.fired() {
+  	call Leds.led1Toggle();
+		post sendResult();
   }
 
   event message_t* Receive.receive(message_t* msg, void* payload, uint8_t len) {
@@ -165,6 +168,12 @@ implementation {
 			if (listened[curSeq] == FALSE) {
 				listened[curSeq] = TRUE;
 				integers[curSeq] = (uint16_t)recv_pkt->random_integer;
+			}
+		} else if (len == sizeof(ack_msg_t) && call AMPacket.source(msg) == 0) {
+			ack_msg_t* recv_pkt = (ack_msg_t*)payload;
+			if (recv_pkt->group_id == 4) {
+				call Timer2.stop();
+				call Control.stop();
 			}
 		}
 		return msg;

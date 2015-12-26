@@ -8,13 +8,14 @@
 configuration IntDataAppC {} 
 implementation { 
   
-  components IntDataC, MainC, LedsC;
+  components IntDataC, MainC, LedsC, new TimerMilliC();
 
 	components ActiveMessageC;
   components new AMReceiverC(AM_MSG);
 
   IntDataC.Boot -> MainC;
   IntDataC.Leds -> LedsC;
+  IntDataC.Timer -> TimerMilliC;
 
 	IntDataC.Control -> ActiveMessageC;
   IntDataC.Receive -> AMReceiverC;

@@ -14,6 +14,8 @@ implementation {
 
   components new AMReceiverC(AM_MSG);
 
+  components SerialPrintfC;
+
   SenseC.Boot -> MainC;
   SenseC.Leds -> LedsC;
 

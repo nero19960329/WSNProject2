@@ -24,12 +24,14 @@ implementation {
 	message_t packet;
 	bool busy = FALSE;
 
+	bool timer2Opened = FALSE;
+
 	uint16_t integers[2000];
 	bool listened[2000];
 
 	uint32_t max = 0, min = 65535, sum = 0, average = 0, median = 0;
 	uint16_t curSeq = 0;
-	uint16_t lackStack[100];
+	uint16_t lackStack[500];
 	int top;
   
   event void Boot.booted() {
@@ -101,7 +103,7 @@ implementation {
 			if (listened[i] == FALSE) {
 				flag = FALSE;
 
-				if (top < 200 && ifLack(i)) {
+				if (top < 500 && ifLack(i)) {
 					lackStack[top] = i;
 					top++;
 				} else {
@@ -139,23 +141,23 @@ implementation {
   	min = integers[0];
   	average = sum / 2000;
   	median = (integers[999] + integers[1000]) / 2;
-
-  	if (sum == 2001000) {
-			call Leds.led0Toggle();
-  	}
   }
 
   event void Timer1.fired() {
   	if (ifAllListened()) {
 			call Timer1.stop();
 			calValue();
+			if (timer2Opened == FALSE) {
+				timer2Opened = TRUE;
+				call Timer2.startPeriodic(10);
+			}
   		post sendResult();
 			//call Control.stop();
   	}
   }
 
   event void Timer2.fired() {
-  	call Leds.led1Toggle();
+  	call Leds.led0Toggle();
 		post sendResult();
   }
 

@@ -1,6 +1,7 @@
 
 #include "Timer.h"
 #include "Sense.h"
+#include <stdio.h>
 
 #define SAMPLING_FREQUENCY 100
 
@@ -53,6 +54,7 @@ implementation {
 		if(len == sizeof(result_msg_t) && call AMPacket.source(msg) == 10 && call AMPacket.destination(msg) == 0) {
 			result_msg_t* recv_pkt = (result_msg_t*)payload;
 			ack_msg_t* this_pkt = (ack_msg_t*)(call Packet.getPayload(&packet, NULL));
+			printf("group_id: %u\nmax: %lu\nmin: %lu\nsum: %lu\naverage: %lu\nmedian: %lu\n", recv_pkt->group_id, recv_pkt->max, recv_pkt->min, recv_pkt->sum, recv_pkt->average, recv_pkt->median);
 			this_pkt -> group_id = 4;
 			if(call AMSend.send(10, &packet, sizeof(ack_msg_t)) == SUCCESS) {
 				busy = TRUE;

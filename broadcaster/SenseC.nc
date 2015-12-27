@@ -34,7 +34,7 @@ implementation {
   event void Boot.booted() {
   	for(i=0; i<2000; i++){
 			//num[i] = call Random.rand32();
-			num[i] = i+1;
+			num[i] = 2000-i;
   	}
   	call Control.start();
   }
